@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 using namespace std;
 
@@ -87,7 +88,15 @@ public:
 	}
 
 
-	vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const {
+	vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus input_status) const {
+		return FindTopDocuments(raw_query, [input_status](int document_id, DocumentStatus status, int rating) { return status == input_status; });
+		//УБРАЛ SWITCH
+		/*
+		Использовал switch так как с ним была теория и со свчом проходит проверка. 
+		Изначально думал, что он не нужен ибо просто куча лишних строчек. 
+		Это как функция MatchDocemnts - на данном этапе она вообще нигде не применяется, но если её нет система проверки "заворачивала" решение.
+		*/
+		/* СТАРЫЙ ВАРИАНТ
 		switch (status)
 		{
 		case DocumentStatus::ACTUAL:
@@ -101,22 +110,29 @@ public:
 		default:
 			return FindTopDocuments(raw_query, [](int document_id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; });
 		}
+		*/
 	}
 
 	template <typename Pred>
 	vector<Document> FindTopDocuments(const string& raw_query, Pred pred) const {
 		const Query query = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(query, pred);
-
+		//УБРАЛ В ЛЯМБДЕ "lhs/rhs", ЗАМЕНИЛ НА ПОНЯТНЫЕ НАИМЕНОВАНИЯ ДЛЯ ЛУЧШЕЙ ЧИТАЕМОСТИ СТОРОННИМ КОДЕРОМ
+		//Использование "lhs/rhs" обусловлено тем, что так было в теории, потому и не подумал переназвать
 		sort(matched_documents.begin(), matched_documents.end(),
-			[](const Document& lhs, const Document& rhs) {
-			if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
-				return lhs.rating > rhs.rating;
+			[](const Document& first_document, const Document& second_document) {
+			if (abs(first_document.relevance - second_document.relevance) < 1e-6) {
+				return first_document.rating > second_document.rating;
 			}
 			else {
-				return lhs.relevance > rhs.relevance;
+				return first_document.relevance > second_document.relevance;
 			}
-		});
+		}); /*
+		ДЛЯ СПРАВКИ ПО SORT
+		Сортировка выполянется в полученном векторе типа Document, содержащим поля "id", "relevance", "rating"
+		Сортировка выполняется по релевантности от большей к меньшей.
+		Если релевантности очень близки, тогда по рейтингу также от большего к меньшему.
+		*/
 		if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
 			matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
 		}
@@ -126,10 +142,7 @@ public:
 	int GetDocumentCount() const {
 		return documents_.size();
 	}
-	
-        //не понимаю зачем нам эта функция??? 
-	//Она не используется на данный момент, но проверка на сайте обязала её вернуть) 
-	//Надеюсь она нам еще понадобится в будущем.
+
 	tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
 		const Query query = ParseQuery(raw_query);
 		vector<string> matched_words;
@@ -181,10 +194,15 @@ private:
 		if (ratings.empty()) {
 			return 0;
 		}
+		//СЧИТАЕМ ЧЕРЕЗ ACCUMULATE
+		int rating_sum = accumulate(begin(ratings), end(ratings), 0);
+
+		/* СТАРЫЙ ВАРИАНТ
 		int rating_sum = 0;
 		for (const int rating : ratings) {
 			rating_sum += rating;
 		}
+		*/
 		return rating_sum / static_cast<int>(ratings.size());
 	}
 
@@ -245,7 +263,19 @@ private:
 			}
 			const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
 			for (const auto[document_id, term_freq] : word_to_document_freqs_.at(word)) {
+				/*
+				СТАРЫЙ ВАРИАНТ if. Два поисковых запроса "documents_.at(document_id).status" и "documents_.at(document_id).rating"
 				if (pred(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) {
+				*/
+				/*
+				Чтобы сократить количество запросов по document_id вижу решение - создать новую переменую типа DocumentData по текущему document_id.
+				Новая переменная doc_id_dat создаётся путем однократного обращения к массиву documents_ по document_id.
+				Новая переменная doc_id_dat хранит в себе поля status и rating, которые нам нужны в работе с предикатом pred.
+				Новая переменная doc_id_dat создаётся только в цикле и больше нигде не видна, таким образом не обрастает мусором и удаляется сразу после выхода из цикла.
+				*/
+				DocumentData doc_id_dat = documents_.at(document_id);
+				if (pred(document_id, doc_id_dat.status, doc_id_dat.rating)) {
+				
 					document_to_relevance[document_id] += term_freq * inverse_document_freq;
 				}
 			}
@@ -263,10 +293,10 @@ private:
 		vector<Document> matched_documents;
 		for (const auto[document_id, relevance] : document_to_relevance) {
 			matched_documents.push_back({
-				document_id,
-			        relevance,
-				documents_.at(document_id).rating
-			});
+												document_id,
+												relevance,
+												documents_.at(document_id).rating
+				});
 		}
 		return matched_documents;
 	}
@@ -302,6 +332,10 @@ int main() {
 		PrintDocument(document);
 	}
 
+	cout << "BANNED [Query + Status].Test:"s << endl;
+	for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED)) {
+		PrintDocument(document);
+	}
 
 	cout << "BANNED:"s << endl;
 	for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, [](int document_id, DocumentStatus status, int rating) { return status == DocumentStatus::BANNED; })) {
