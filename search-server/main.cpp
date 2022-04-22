@@ -13,6 +13,7 @@
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double RELEVANCE_THRESHOLD = 0.000001; //порог срабатывания сортировки по релевантности 1e-6, оно же 10 в степени -6
 
 string ReadLine() {
 	string s;
@@ -96,10 +97,9 @@ public:
 	vector<Document> FindTopDocuments(const string& raw_query, Pred pred) const {
 		const Query query = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(query, pred);
-		const double relevance_threshold = 0.000001; //порог срабатывания сортировки по релевантности 1e-6, оно же 10 в степени -6
 		sort(matched_documents.begin(), matched_documents.end(),
-			[&relevance_threshold](const Document& lhs_document, const Document& rhs_document) {
-				if (abs(lhs_document.relevance - rhs_document.relevance) < relevance_threshold) {
+			[](const Document& lhs_document, const Document& rhs_document) {
+				if (abs(lhs_document.relevance - rhs_document.relevance) < RELEVANCE_THRESHOLD) {
 					return lhs_document.rating > rhs_document.rating;
 				}
 				else {
@@ -114,7 +114,7 @@ public:
 	}
 
 	int GetDocumentCount() const {
-		return documents_.size();
+		return static_cast<int>(documents_.size());
 	}
 
 	tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
@@ -391,7 +391,7 @@ void TestMatching() {
 	}
 }
 
-void TestRelevanseSort() {
+void TestRelevanceSort() {
 	const int doc_id_0 = 0;
 	const string content_0 = "white cat cool neck"s;
 	const vector<int> ratings_0 = { 8, -3 };
@@ -522,12 +522,11 @@ void TestRelevance() {
 		const auto found_docs = server.FindTopDocuments(test_request);
 
 		//ожидаемые расчётные релевантности
-		double top_relevance = 0.86643397569993164;
-		double low_relevance = 0.17328679513998632;
+		double top_relevance = 0.866433;
+		double low_relevance = 0.173286;
 
-		ASSERT_EQUAL(found_docs[0].relevance, top_relevance);
-		ASSERT_EQUAL(found_docs[1].relevance, low_relevance);
-		ASSERT_EQUAL(found_docs[2].relevance, low_relevance);
+		ASSERT(abs(found_docs[0].relevance - top_relevance) < RELEVANCE_THRESHOLD);
+		ASSERT(abs(found_docs[1].relevance - low_relevance) < RELEVANCE_THRESHOLD);
 	}
 }
 
@@ -535,7 +534,7 @@ void TestSearchServer() {
 	RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
 	RUN_TEST(TestMinusWords); //тест на минус слова
 	RUN_TEST(TestMatching); //тест на матчинг
-	RUN_TEST(TestRelevanseSort); //сортировка по релевантности
+	RUN_TEST(TestRelevanceSort); //сортировка по релевантности
 	RUN_TEST(TestRating); //высчитывание рейтинга документа
 	RUN_TEST(TestPredicate); //работа с предикатом
 	RUN_TEST(TestStatusSearch); //работа со статусом
