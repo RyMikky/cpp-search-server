@@ -1,4 +1,4 @@
-// search_server_s3_t17_v1.cpp (Sprint 3, Tema 17, Version 1)
+// search_server_s3_t17_v2.cpp (Sprint 3, Tema 17, Version 2)
 
 #include <string>
 #include <iostream>
@@ -27,13 +27,6 @@ int ReadLineWithNumber() {
     cin >> result;
     ReadLine();
     return result;
-}
-
-//общая проверка на корректность символов в слове
-static bool IsValidWord(const string& word) {
-    return none_of(word.begin(), word.end(), [](char c) {
-        return c >= '\0' && c < ' ';
-        });
 }
 
 vector<string> SplitIntoWords(const string& text) {
@@ -76,9 +69,6 @@ set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
     set<string> non_empty_strings;
     for (const string& str : strings) {
         if (!str.empty()) {
-            if (!IsValidWord(str)) {
-                throw invalid_argument("Недопустимые символы в задаваемых стоп-словах");
-            }
             non_empty_strings.insert(str);
         }
     }
@@ -97,13 +87,15 @@ public:
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
+        for (const auto& word : stop_words) {
+            if (!IsValidWord(word)) {
+                throw invalid_argument("Недопустимые символы в задаваемых стоп-словах");
+            }
+        }
     }
 
     explicit SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
-        if (!IsValidWord(stop_words_text)) {
-            throw invalid_argument("Недопустимые символы в задаваемых стоп-словах");
-        }
     }
 
     void AddDocument(int document_id, const string& document, DocumentStatus status,
@@ -215,6 +207,12 @@ private:
         return stop_words_.count(word) > 0;
     }
 
+    static bool IsValidWord(const string& word) {
+        return none_of(word.begin(), word.end(), [](char c) {
+            return c >= '\0' && c < ' ';
+            });
+    }
+
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
@@ -248,6 +246,9 @@ private:
     };
 
     QueryWord ParseQueryWord(string text) const {
+        if (text.empty()) {
+            throw invalid_argument("Поисковый запрос пуст"s);
+        }
         bool is_minus = false;
         if (text[0] == '-') {
             is_minus = true;
@@ -279,7 +280,7 @@ private:
         Query query;
         vector<string> query_words = SplitIntoWords(text);
         if (query_words.empty()) {
-            throw invalid_argument("Пустой поисковый запрос"s);
+            throw invalid_argument("Поисковый запрос пуст"s);
         }
         for (const string& word : query_words) {
             QueryWord query_word = ParseQueryWord(word);
@@ -406,7 +407,7 @@ int main() {
     }
 
     try {
-        set<string> stops = { "a"s, "4"s, "и"s, "на"s, "ку"s, "сфм"s };
+        set<string> stops = { "a"s, "4"s, "\x12"s, "на"s, "ку"s, "сфм"s };
         SearchServer search_server_two_whit_set(stops);
         cout << "Все ок, второй сервер создан!"s << endl;
     }
