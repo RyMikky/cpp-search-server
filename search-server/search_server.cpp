@@ -1,5 +1,5 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #include "search_server.h"
+#include "remove_duplicates.h"
 
 SearchServer::SearchServer(const std::string& stop_words_text)
     : SearchServer(SplitIntoWords(stop_words_text)) {
@@ -9,14 +9,32 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
     if ((document_id < 0) || (documents_.count(document_id) > 0)) {
         throw std::invalid_argument("Invalid document_id");
     }
-    const auto words = SplitIntoWordsNoStop(document);
+    const auto words = SearchServer::SplitIntoWordsNoStop(document);
 
     const double inv_word_count = 1.0 / words.size();
     for (const std::string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
+        document_to_word_freqs_[document_id][word] += inv_word_count;
     }
-    documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
+    
+    documents_.emplace(document_id, DocumentData{ SearchServer::ComputeAverageRating(ratings), status });
     document_ids_.push_back(document_id);
+
+    // Автоматическое отсеивание дубликатов документов при добавлении на сервер, 
+    // Если включить, то из remove_duplicate.cpp/.h будут браться функции обработки контейнеров
+    /*int duplicat_count = 0;
+    for (auto& element : document_to_word_freqs_) {
+        if (WordsEqualCheck(element.second, document_to_word_freqs_[document_id])) {
+            duplicat_count++;
+        }
+    }
+    if (duplicat_count <= 1) {
+        documents_.emplace(document_id, DocumentData{ SearchServer::ComputeAverageRating(ratings), status });
+        document_ids_.push_back(document_id);
+    }
+    else {
+        SearchServer::RemoveDocument(document_id);
+    }*/
 }
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentStatus status) const {
@@ -27,6 +45,44 @@ std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_quer
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query) const {
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
+}
+
+// забыл про неё, простите!
+const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
+    std::map<std::string, double> dummy;
+    dummy.emplace(" ", 0.0);
+    if (document_to_word_freqs_.count(document_id)) {
+        return document_to_word_freqs_.at(document_id);
+    }
+    else {
+        return dummy;
+    }
+}
+
+void SearchServer::RemoveDocument(int document_id) {
+    
+    // Чистим std::vector<int> document_ids_;
+    if (find(SearchServer::document_ids_.begin(), SearchServer::document_ids_.end(), document_id) != SearchServer::document_ids_.end()) {
+        remove(SearchServer::document_ids_.begin(), SearchServer::document_ids_.end(), document_id);
+        SearchServer::document_ids_.resize(SearchServer::GetDocumentCount() - 1);
+    }
+
+    // Чистим std::map<int, DocumentData> documents_;
+    if (documents_.count(document_id)) {
+        documents_.erase(document_id);
+    }
+
+    // чистим std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    for (auto& element : SearchServer::word_to_document_freqs_) {
+        if (element.second.count(document_id)) {
+            element.second.erase(document_id);
+        }
+    }
+
+    // чистим std::map<int, std::map<std::string, double>> document_to_word_freqs_;
+    if (document_to_word_freqs_.count(document_id)) {
+        document_to_word_freqs_.erase(document_id);
+    }
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(const std::string& raw_query, int document_id) const {

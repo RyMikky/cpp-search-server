@@ -1,4 +1,3 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #include "request_queue.h"
 
 RequestQueue::RequestQueue(const SearchServer& search_server)

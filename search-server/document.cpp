@@ -1,6 +1,4 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #include "document.h"
-
 
 Document::Document() = default;
 

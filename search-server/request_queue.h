@@ -1,4 +1,3 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #pragma once
 #include <stack>
 #include <vector>
@@ -69,4 +68,4 @@ std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query,
         }
     }
     return result;
-}
+};

@@ -1,10 +1,10 @@
-//Вставьте сюда своё решение из урока «‎Очередь запросов».‎
 #pragma once
 #include "read_input_functions.h"
 #include "document.h"
 #include <map>
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <vector>
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -38,10 +38,36 @@ public:
         return documents_.size();
     }
 
-    int GetDocumentId(int index) const {
+    //старая не нужная функция
+    /*int GetDocumentId(int index) const {
         return document_ids_.at(index);
+    }*/
+
+    auto begin() const {
+        return SearchServer::document_ids_.begin();
     }
 
+    auto end() const {
+        return SearchServer::document_ids_.end();
+    }
+
+    auto ToDuplicateBegin() {
+        return SearchServer::document_to_word_freqs_.begin();
+    }
+
+    auto ToDuplicateEnd() {
+        return SearchServer::document_to_word_freqs_.end();
+    }
+
+    std::map<int, std::map<std::string, double>> ToDuplicateCheck() {
+        return document_to_word_freqs_;
+    }
+
+    // для получения документов в remove_duplicates сначала сделал два метода выше ибо забыл про эту функцию и решил с помощью итераторов
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+
+    void RemoveDocument(int document_id);
+    
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
 private:
@@ -56,6 +82,7 @@ private:
 
     const std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::vector<int> document_ids_;
 
