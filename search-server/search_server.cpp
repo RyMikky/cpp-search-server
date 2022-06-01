@@ -19,22 +19,6 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
     
     documents_.emplace(document_id, DocumentData{ SearchServer::ComputeAverageRating(ratings), status });
     document_ids_.push_back(document_id);
-
-    // Автоматическое отсеивание дубликатов документов при добавлении на сервер, 
-    // Если включить, то из remove_duplicate.cpp/.h будут браться функции обработки контейнеров
-    /*int duplicat_count = 0;
-    for (auto& element : document_to_word_freqs_) {
-        if (WordsEqualCheck(element.second, document_to_word_freqs_[document_id])) {
-            duplicat_count++;
-        }
-    }
-    if (duplicat_count <= 1) {
-        documents_.emplace(document_id, DocumentData{ SearchServer::ComputeAverageRating(ratings), status });
-        document_ids_.push_back(document_id);
-    }
-    else {
-        SearchServer::RemoveDocument(document_id);
-    }*/
 }
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentStatus status) const {
@@ -47,7 +31,6 @@ std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_quer
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
-// забыл про неё, простите!
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
     std::map<std::string, double> dummy;
     dummy.emplace(" ", 0.0);
