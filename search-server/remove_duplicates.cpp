@@ -3,17 +3,22 @@
 void RemoveDuplicates(SearchServer& search_server) {
     size_t total_documents = search_server.GetDocumentCount();
     std::set<int> duplicats_ = {};
-    std::set<std::set<std::string>> check_ = {};
+    std::set<std::set<std::string_view>> check_ = {};
 
     for (int i = 1; i <= total_documents; i++) {
         const auto& document_ = search_server.GetWordFrequencies(i);
-        auto document_words_ = WordsSetCreator(document_);
-        if (check_.count(document_words_)) {
-            duplicats_.insert(i);
+        if (document_.empty()) {
+            continue;
         }
         else {
-            check_.insert(document_words_);
-        }
+            auto document_words_ = WordsSetCreator(document_);
+            if (check_.count(document_words_)) {
+                duplicats_.insert(i);
+            }
+            else {
+                check_.insert(document_words_);
+            }
+        } 
     }
 
     for (auto duplicat : duplicats_) {
@@ -22,8 +27,8 @@ void RemoveDuplicates(SearchServer& search_server) {
     }
 }
 
-std::set<std::string> WordsSetCreator(const std::map<std::string, double>& element) {
-    std::set<std::string> result = {};
+std::set<std::string_view> WordsSetCreator(const std::map<std::string_view, double>& element) {
+    std::set<std::string_view> result = {};
     for (const auto& e : element) {
         result.insert(e.first);
     }

@@ -5,4 +5,4 @@
 
 void RemoveDuplicates(SearchServer& search_server);
 
-std::set<std::string> WordsSetCreator(const std::map<std::string, double>& element);
+std::set<std::string_view> WordsSetCreator(const std::map<std::string_view, double>& element);
