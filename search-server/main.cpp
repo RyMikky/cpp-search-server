@@ -1,4 +1,4 @@
-// search_server v1_s8_my_realisation
+// search_server v1_s8
 
 #include <optional>
 #include <stdexcept>
@@ -22,7 +22,8 @@ using namespace std;
 int main() {
     setlocale(LC_ALL, "Russian");
     
-    
+    // ВСЕ ТЕСТЫ НАХОДЯТСЯ В "main_execution_tests.h"
+
     {
         // Старые тесты из 5 спринта
         QueueTests();
