@@ -21,9 +21,6 @@ public:
     struct Access {
         std::lock_guard<std::mutex> ref_guard;
         Value& ref_to_value;
-
-        /*Access(const Key& key, Part& part) : ref_guard(part.mutex_), ref_to_value(part.data_map_[key]) {
-        }*/
     };
 
     explicit ConcurrentMap(size_t bucket_count) : data_massive_(bucket_count) {
@@ -32,7 +29,6 @@ public:
     Access operator[](const Key& key) {
         Part& part = PartSelect(key);
         return { std::lock_guard(part.mutex_), part.data_map_[key] };
-        /*return { key, PartSelect(key) };*/
     }
 
     std::map<Key, Value> BuildOrdinaryMap() {
@@ -63,4 +59,3 @@ private:
         return data_massive_[static_cast<uint64_t>(key) % data_massive_.size()];
     }
 };
-

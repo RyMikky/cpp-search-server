@@ -91,13 +91,4 @@ std::vector<Document> ProcessQueriesJoined(
 	
 	SimpleDocuments result(ProcessQueries(search_server, queries));
 	return result.GetDataInOneMassive();
-	/*std::vector<std::vector<Document>>pre_result = ProcessQueries(search_server, queries);
-	std::vector<Document> result;
-
-	for (auto& docs : pre_result) {
-		for (auto& doc : docs) {
-			result.push_back(doc);
-		}
-	}
-	return result;*/
 }

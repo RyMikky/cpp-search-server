@@ -367,11 +367,6 @@ void BenchMark_QueriesTest() {
             std::cout << "---------------- Оптимизированное решение ---------------" << std::endl;
             vector<vector<Document>> documents_lists = ProcessQueries(search_server, queries);
             
-            /*for (
-                const auto& documents : ProcessQueries(search_server, queries)
-                ) {
-                cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
-            }*/
         }
         std::cout << std::endl;
 
@@ -383,10 +378,6 @@ void BenchMark_QueriesTest() {
             for (const std::string& query : queries) {
                 documents_lists.push_back(search_server.FindTopDocuments(query));
             }
-
-            /*for (const auto& documents : documents_lists) {
-                cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
-            }*/
         }
         std::cout << std::endl;
     }
@@ -479,11 +470,6 @@ void BenchMark_QueriesJoinedTest() {
             std::cout << "---------------- Оптимизированное решение ---------------" << std::endl;
             vector<Document> documents_lists = ProcessQueriesJoined(search_server, queries);
 
-            /*for (
-                const auto& documents : ProcessQueries(search_server, queries)
-                ) {
-                cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
-            }*/
         }
         std::cout << std::endl;
 
@@ -504,9 +490,6 @@ void BenchMark_QueriesJoinedTest() {
                 }
             }
 
-            /*for (const auto& documents : documents_lists) {
-                cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
-            }*/
         }
         std::cout << std::endl;
     }
@@ -690,29 +673,6 @@ void BenchMark_ParseQueryTest() {
 
     const auto queries = GenerateQueries(generator, dictionary, query_count_, max_word_count_);
 
-    /*{
-        LOG_DURATION("Sequence Standart Query Write Only");
-        for (const auto& query : queries) {
-            auto struct_query = search_server.QueryTest(query);
-           
-        }
-    }
-    
-    {
-        LOG_DURATION("Sorted deduplicated New Query Write Only");
-        for (const auto& query : queries) {
-            auto struct_par_query = search_server.VectorWSDQueryTest(query);
-        }
-    }
-    
-    {
-        LOG_DURATION("Unsorted duplicated New Query Write Only");
-        for (const auto& query : queries) {
-            auto struct_par_query = search_server.VectorNoSDQueryTest(query);
-        }
-    }*/
-
-
     {
         LOG_DURATION("Sequence Standart Query W/R Plus Words");
         for (const auto& query : queries) {
@@ -850,7 +810,6 @@ void StringViewTest() {
         std::string stop_words_s = "not but and or";
         std::string_view stop_words_sv = stop_words_s;
 
-        //SearchServer server_no_lit("not alfa and or");
 
         SearchServer server_s(stop_words_s);
         SearchServer server_s2("not but and or"s);
@@ -975,15 +934,6 @@ void StringViewTest() {
             for (int i = 0; i != 2500; i++) {
                 mass_docs_server.AddDocument(i, "Здесь лежит этот текст", DocumentStatus::ACTUAL, { 1, 2 });
             }
-
-            /*auto documents_to_word_freqs_from_server_ = mass_docs_server.GetDocumentMassive();
-            for (auto item : documents_to_word_freqs_from_server_) {
-                std::cout << "      Document id: " << item.first << ", text - ";
-                for (auto& text : item.second) {
-                    std::cout << text.first << " ";
-                }
-                std::cout << std::endl;
-            }*/
 
             int docs_cout = mass_docs_server.GetDocumentCount();
             for (int i = 0; i != docs_cout; i++) {

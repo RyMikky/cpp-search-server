@@ -9,9 +9,6 @@
 #include <utility>
 #include <string_view>
 #include <thread>
-//#include <numeric>
-//#include <functional>
-//#include <cassert>
 
 #include "read_input_functions.h"
 #include "document.h"
@@ -28,8 +25,13 @@ enum class DocumentStatus {
     REMOVED,
 };
 
+
+// ќсновной рабочий модуль системы
+// Ѕазовый класс формируетс€ с указанием стоп-слов, которые будут заведомо игнорированны
 class SearchServer {
 public:
+
+    // -------------------------------------- Ѕлок конструкторов ---------------------------------------
 
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
@@ -38,10 +40,10 @@ public:
 
     explicit SearchServer(const std::string& stop_words_text);
 
-
+    // ƒобавление документа в базу данных
     void AddDocument(int document_id, std::string_view document, DocumentStatus status, const std::vector<int>& ratings);
 
-
+    // ѕоиск документа по базе
     // принимающие политику по количеству потоков
     template <typename Execution, typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(const Execution& policy, std::string_view raw_query, DocumentPredicate document_predicate) const;
@@ -52,7 +54,7 @@ public:
     template <typename Execution>
     std::vector<Document> FindTopDocuments(const Execution& policy, std::string_view raw_query) const;
 
-
+    // ѕоиск документа по базе
     // заведомо однопоточные
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(std::string_view raw_query, DocumentPredicate document_predicate) const;
@@ -61,7 +63,7 @@ public:
 
     std::vector<Document> FindTopDocuments(std::string_view raw_query) const;
 
-
+    // ѕолучение количества документов в базе
     size_t GetDocumentCount() const {
         return documents_.size();
     }
@@ -76,7 +78,7 @@ public:
 
     const std::map<std::string_view, double>& GetWordFrequencies(int document_id) const;
 
-
+    // ”даление документа из базы
     void RemoveDocument(int document_id);
 
     void RemoveDocument(const std::execution::sequenced_policy&, int document_id) {
@@ -85,7 +87,7 @@ public:
 
     void RemoveDocument(const std::execution::parallel_policy&, int document_id);
     
-
+    
     std::tuple<std::vector<std::string_view>, DocumentStatus>
         MatchDocument(std::string_view raw_query, int document_id) const;
 
@@ -257,33 +259,6 @@ std::vector<Document> SearchServer::FindTopDocuments(const Execution& policy,
     }
 
     return matched_documents;
-
-    //// ≈сли предикат не попадает в FindAllDocuments 
-    //// —корость выполнени€ последовательной версии возрастает
-    //// ќднако треннажер такую версию не пропускает
-    //std::vector<Document> pre_matched_documents = FindAllDocuments(policy, query);
-    //std::vector<Document> matched_documents;
-
-    //for (Document& document : pre_matched_documents) {
-    //    if (document_predicate(document.id, documents_.at(document.id).status_, document.rating)) {
-    //        matched_documents.push_back(document);
-    //    }
-    //}
-
-    //std::sort(policy, matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
-    //    if (std::abs(lhs.relevance - rhs.relevance) < RELEVANCE_THRESHOLD) {
-    //        return lhs.rating > rhs.rating;
-    //    }
-    //    else {
-    //        return lhs.relevance > rhs.relevance;
-    //    }
-    //});
-    //
-    //if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-    //    matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-    //}
-
-    //return matched_documents;
 }
 
 template <typename DocumentPredicate>

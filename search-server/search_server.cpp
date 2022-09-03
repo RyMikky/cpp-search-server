@@ -24,10 +24,6 @@ void SearchServer::AddDocument(int document_id, std::string_view document, Docum
     //вставляем строку в documents_ там и храним в дальнейшем
     documents_.emplace(document_id, DocumentData{ SearchServer::ComputeAverageRating(ratings), status, document_string });
 
-    //берем ссылку на строку из documents_ на основе которой будем делать string_view
-    //const std::string& text_to_ref = documents_.at(document_id).text_;
-    //const auto words = SearchServer::SplitIntoWordsNoStop(text_to_ref);
-
     const auto words = SearchServer::SplitIntoWordsNoStop(documents_.at(document_id).text_);
 
     const double inv_word_count = 1.0 / words.size();
@@ -107,19 +103,6 @@ void SearchServer::RemoveDocument(const std::execution::parallel_policy&, int do
     document_to_word_freqs_.erase(document_id);
     document_ids_.erase(document_id);
     documents_.erase(document_id);
-
-    //вектор указателей на ID работает увы медленней
-    /*std::vector<std::pair<std::string const, std::map<int, double>>*> wtdf_to_par_exe(word_to_document_freqs_.size());
-
-    std::transform(std::execution::par, word_to_document_freqs_.begin(), word_to_document_freqs_.end(), wtdf_to_par_exe.begin(),
-        [](std::pair<std::string const, std::map<int, double>>& elem) {return &elem; });
-
-    std::for_each(std::execution::par, wtdf_to_par_exe.begin(), wtdf_to_par_exe.end(),
-        [document_id](std::pair<std::string const, std::map<int, double>>* reference) {
-            if (reference->second.count(document_id)) {
-                reference->second.erase(document_id);
-            }
-        });*/
 
 }
 

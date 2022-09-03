@@ -23,14 +23,3 @@ VirturlStringSet MakeUniqueNonEmptyStrings(const StringContainer& strings) {
     }
     return non_empty_strings;
 }
-
-//template <typename StringContainer>
-//std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
-//    std::set<std::string> non_empty_strings;
-//    for (const std::string& str : strings) {
-//        if (!str.empty()) {
-//            non_empty_strings.insert(str);
-//        }
-//    }
-//    return non_empty_strings;
-//}
